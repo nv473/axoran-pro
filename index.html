@@ -1,0 +1,2652 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>نظام ترويج الأرقام</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* ===== الأنماط العامة ===== */
+        :root {
+            --primary: #6a11cb;
+            --secondary: #2575fc;
+            --accent: #00ff9d;
+            --dark: #0c0b1e;
+            --light: #ffffff;
+            --card-bg: linear-gradient(145deg, #1a1a2e, #16213e);
+            --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            --gradient-1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-2: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --gradient-3: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --gradient-4: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            --admin: #ffb347;
+            --supervisor: #00d4ff;
+            --warning: #ffb347;
+            --ticket-pending: #ffb347;
+            --ticket-waiting: #ff8c00;
+            --ticket-verified: #4facfe;
+            --ticket-done: #43e97b;
+            --ticket-failed: #f5576c;
+            --flash-bg: rgba(0, 255, 157, 0.15);
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Cairo', 'Segoe UI', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+        body {
+            background: linear-gradient(135deg, var(--dark) 0%, #1a1036 100%);
+            color: var(--light);
+            min-height: 100vh;
+            padding: 10px;
+            font-size: 14px;
+            overflow-x: hidden;
+        }
+        .app-logo {
+            text-align: center;
+            margin: 10px auto 20px;
+            padding: 15px;
+            max-width: 400px;
+            background: var(--card-bg);
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: var(--card-shadow);
+            backdrop-filter: blur(10px);
+        }
+        .app-logo h1 {
+            color: var(--accent);
+            font-size: 1.4rem;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            text-shadow: 0 2px 10px rgba(106,17,203,0.5);
+        }
+        .app-logo p {
+            color: rgba(255,255,255,0.8);
+            font-size: 0.85rem;
+        }
+        .auth-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 80vh;
+            padding: 10px;
+        }
+        .auth-box {
+            background: var(--card-bg);
+            border-radius: 25px;
+            padding: 25px 20px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid rgba(255,255,255,0.15);
+            position: relative;
+            overflow: hidden;
+        }
+        .auth-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gradient-1);
+        }
+        .auth-title {
+            text-align: center;
+            margin-bottom: 25px;
+            color: var(--accent);
+            font-size: 1.4rem;
+            text-shadow: 0 2px 8px rgba(0,255,157,0.3);
+        }
+        .auth-form {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+        .input-group {
+            position: relative;
+        }
+        .input-icon {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--accent);
+            font-size: 1.1rem;
+            z-index: 2;
+        }
+        .phone-input-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            width: 100%;
+        }
+        .country-select {
+            width: 140px;
+            flex-shrink: 0;
+            padding: 16px 12px;
+            background: rgba(255,255,255,0.07);
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 15px;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .country-select option {
+            background: #1a1a2e;
+            color: white;
+        }
+        .phone-field {
+            flex: 1;
+            padding: 16px 18px;
+            background: rgba(255,255,255,0.07);
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 15px;
+            color: white;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 16px 45px 16px 15px;
+            border: 2px solid transparent;
+            border-radius: 15px;
+            background: rgba(255,255,255,0.07);
+            color: var(--light);
+            font-size: 16px;
+            transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+            font-weight: 500;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            background: rgba(255,255,255,0.1);
+            box-shadow: 0 0 0 3px rgba(0,255,157,0.2);
+            transform: translateY(-2px);
+        }
+        input::placeholder {
+            color: rgba(255,255,255,0.5);
+            font-size: 14px;
+        }
+        .btn {
+            padding: 16px 24px;
+            border: none;
+            border-radius: 15px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            margin-top: 5px;
+            position: relative;
+            overflow: hidden;
+            letter-spacing: 0.5px;
+        }
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: 0.5s;
+        }
+        .btn:hover::before {
+            left: 100%;
+        }
+        .btn-primary { background: var(--gradient-1); color: white; box-shadow: 0 6px 20px rgba(106,17,203,0.4); }
+        .btn-success { background: var(--gradient-4); color: white; box-shadow: 0 6px 20px rgba(67,233,123,0.4); }
+        .btn-danger { background: var(--gradient-2); color: white; box-shadow: 0 6px 20px rgba(240,147,251,0.4); }
+        .btn-info { background: var(--gradient-3); color: white; box-shadow: 0 6px 20px rgba(79,172,254,0.4); }
+        .btn-warning { background: linear-gradient(135deg, #fbbf24, #f59e0b); color: white; box-shadow: 0 6px 20px rgba(245,158,11,0.4); }
+        .btn-admin { background: linear-gradient(135deg, #ff9966, #ff5e62); color: white; box-shadow: 0 6px 20px rgba(255,94,98,0.4); }
+        .btn-supervisor { background: linear-gradient(135deg, #00c6ff, #0072ff); color: white; box-shadow: 0 6px 20px rgba(0,114,255,0.4); }
+        .btn-promoter { background: var(--gradient-2); color: white; }
+        .btn:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(106,17,203,0.5); }
+        .btn-small { padding: 10px 16px; font-size: 13px; border-radius: 12px; width: auto; min-width: 80px; }
+        .auth-footer {
+            text-align: center;
+            margin-top: 25px;
+            color: rgba(255,255,255,0.7);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .auth-link {
+            color: var(--accent);
+            cursor: pointer;
+            text-decoration: none;
+            font-weight: 600;
+            padding: 10px;
+            border-radius: 10px;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: rgba(255,255,255,0.05);
+        }
+        .auth-link:hover {
+            background: rgba(0,255,157,0.1);
+            transform: translateY(-2px);
+        }
+        .forgot-password-link {
+            color: var(--accent);
+            cursor: pointer;
+            padding: 12px;
+            border-radius: 10px;
+            background: rgba(255,180,70,0.1);
+            border: 1px solid rgba(255,180,70,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .forgot-password-link:hover {
+            background: rgba(255,180,70,0.2);
+            transform: translateY(-2px);
+            border-color: #ffb347;
+        }
+        #appContent {
+            display: none;
+            flex-direction: column;
+            max-width: 800px;
+            margin: 0 auto;
+            gap: 15px;
+        }
+        .app-header {
+            background: var(--card-bg);
+            border-radius: 25px;
+            padding: 20px;
+            border: 1px solid rgba(255,255,255,0.15);
+            box-shadow: var(--card-shadow);
+            margin-bottom: 10px;
+        }
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex: 1;
+            min-width: 200px;
+        }
+        .user-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 20px;
+            background: var(--gradient-1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 24px;
+            color: white;
+            flex-shrink: 0;
+            box-shadow: 0 6px 20px rgba(106,17,203,0.4);
+            border: 3px solid rgba(255,255,255,0.2);
+        }
+        .user-details {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex: 1;
+            min-width: 0;
+        }
+        .user-name {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--accent);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            text-shadow: 0 2px 8px rgba(0,255,157,0.3);
+        }
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .support-btn {
+            background: rgba(255,107,107,0.15);
+            border: 2px solid #ff6b6b;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 0 15px #ff6b6b50;
+        }
+        .support-btn:hover {
+            background: #ff6b6b;
+            transform: translateY(-3px);
+            box-shadow: 0 0 30px #ff6b6b;
+        }
+        .logout-btn {
+            background: rgba(255,255,255,0.08);
+            color: var(--light);
+            border: 2px solid rgba(255,255,255,0.1);
+            padding: 12px 18px;
+            border-radius: 15px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.3s;
+            flex-shrink: 0;
+        }
+        .logout-btn:hover {
+            background: rgba(240,147,251,0.2);
+            border-color: rgba(240,147,251,0.5);
+            transform: translateY(-2px);
+        }
+        .role-badge {
+            padding: 6px 14px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+            width: fit-content;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            border: 2px solid rgba(255,255,255,0.1);
+        }
+        .role-admin { background: var(--admin); color: black; }
+        .role-supervisor { background: var(--supervisor); color: black; }
+        .role-promoter { background: var(--gradient-1); color: white; }
+        .role-beneficiary { background: var(--gradient-3); color: white; }
+        .role-suspended-beneficiary { background: var(--gradient-2); color: white; }
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-top: 15px;
+        }
+        .stat-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 12px 5px !important;
+            text-align: center;
+            transition: all 0.3s;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: var(--card-shadow);
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+        }
+        .stat-card:nth-child(1) { background: linear-gradient(145deg, #1a1a2e, #16213e); }
+        .stat-card:nth-child(2) { background: linear-gradient(145deg, #1e3c72, #2a5298); }
+        .stat-card:nth-child(3) { background: linear-gradient(145deg, #0f2027, #203a43); }
+        .stat-card:nth-child(4) { background: linear-gradient(145deg, #141e30, #243b55); }
+        .stat-value {
+            font-size: 1.2rem !important;
+            font-weight: 800;
+            margin: 2px 0 !important;
+            color: var(--accent);
+            text-shadow: 0 2px 10px rgba(0,255,157,0.5);
+        }
+        .stat-label {
+            color: rgba(255,255,255,0.8);
+            font-size: 9px !important;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .stat-card.suspended {
+            background: linear-gradient(145deg, #3a1a1a, #4e1e1e) !important;
+            padding: 12px 5px !important;
+        }
+        .stat-card.suspended .stat-value {
+            color: #f5576c;
+            font-size: 1.2rem !important;
+            margin: 2px 0 !important;
+        }
+        .stat-card.suspended .stat-label {
+            color: rgba(255,255,255,0.8) !important;
+            font-size: 9px !important;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .switch-container {
+            background: rgba(0,212,255,0.1);
+            border: 2px solid var(--supervisor);
+            border-radius: 40px;
+            padding: 12px 18px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: nowrap;
+            gap: 10px;
+            box-shadow: 0 0 25px #00d4ff60;
+        }
+        .switch-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--supervisor);
+            white-space: nowrap;
+        }
+        .switch-toggle {
+            display: flex;
+            gap: 6px;
+            background: rgba(0,0,0,0.4);
+            padding: 4px;
+            border-radius: 30px;
+            flex-shrink: 0;
+        }
+        .switch-option {
+            padding: 8px 18px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.9rem;
+            transition: 0.2s;
+            background: transparent;
+            color: rgba(255,255,255,0.7);
+            white-space: nowrap;
+        }
+        .switch-option.active {
+            background: var(--supervisor);
+            color: black;
+            box-shadow: 0 0 20px var(--supervisor);
+        }
+        .permissions-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+        .permission-switch-row {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            padding: 12px 14px;
+            background: rgba(0,0,0,0.25);
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.08);
+            transition: 0.2s;
+            width: 100%;
+        }
+        .permission-switch-row:hover {
+            background: rgba(255,255,255,0.05);
+            border-color: rgba(255,255,255,0.15);
+        }
+        .permission-label {
+            color: rgba(255,255,255,0.9);
+            font-size: 13px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        .permission-label i {
+            color: var(--accent);
+            width: 18px;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+        .permission-toggle {
+            display: flex;
+            gap: 4px;
+            background: rgba(0,0,0,0.3);
+            padding: 3px;
+            border-radius: 30px;
+            width: 100%;
+            justify-content: center;
+        }
+        .permission-option {
+            padding: 5px 12px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.75rem;
+            transition: 0.2s;
+            background: transparent;
+            color: rgba(255,255,255,0.5);
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            border: none;
+            flex: 1;
+            justify-content: center;
+        }
+        .permission-option.active-on {
+            background: #2ecc71;
+            color: white;
+            box-shadow: 0 0 12px rgba(46,204,113,0.3);
+        }
+        .permission-option.active-off {
+            background: #e74c3c;
+            color: white;
+            box-shadow: 0 0 12px rgba(231,76,60,0.3);
+        }
+        .permission-option i {
+            font-size: 0.65rem;
+        }
+        .tabs-container {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 8px;
+            border: 1px solid rgba(255,255,255,0.15);
+            box-shadow: var(--card-shadow);
+        }
+        .tabs {
+            display: flex;
+            gap: 5px;
+        }
+        .tab {
+            flex: 1;
+            text-align: center;
+            padding: 16px 8px;
+            cursor: pointer;
+            border-radius: 15px;
+            transition: all 0.3s;
+            font-weight: 600;
+            color: rgba(255,255,255,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-size: 14px;
+            white-space: nowrap;
+            background: rgba(255,255,255,0.05);
+            border: 2px solid transparent;
+        }
+        .tab.active {
+            background: var(--gradient-1);
+            color: white;
+            border-color: rgba(255,255,255,0.2);
+            box-shadow: 0 6px 20px rgba(106,17,203,0.4);
+            transform: translateY(-2px);
+        }
+        .tab:hover:not(.active) {
+            background: rgba(255,255,255,0.1);
+            transform: translateY(-2px);
+        }
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+        .action-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s;
+            border: 2px solid rgba(255,255,255,0.1);
+            cursor: pointer;
+            box-shadow: var(--card-shadow);
+            position: relative;
+            overflow: hidden;
+        }
+        .action-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--gradient-1);
+        }
+        .action-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+            border-color: rgba(106,17,203,0.5);
+        }
+        .action-icon {
+            font-size: 2.2rem;
+            margin-bottom: 15px;
+            color: var(--accent);
+            text-shadow: 0 2px 10px rgba(0,255,157,0.5);
+        }
+        .action-title {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 5px;
+            color: var(--light);
+        }
+        .action-desc {
+            font-size: 11px;
+            color: rgba(255,255,255,0.6);
+            line-height: 1.4;
+        }
+        .numbers-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .number-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 15px 18px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            position: relative;
+            overflow: visible;
+            box-shadow: var(--card-shadow);
+            min-height: 140px;
+            margin-bottom: 12px;
+        }
+        .number-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 5px;
+            height: 100%;
+            background: var(--gradient-1);
+        }
+        .number-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            gap: 10px;
+            flex-wrap: nowrap;
+            min-height: 40px;
+        }
+        .number-value {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--accent);
+            direction: ltr;
+            text-align: left;
+            unicode-bidi: bidi-override;
+            word-break: break-all;
+            font-family: 'Courier New', monospace;
+            text-shadow: 0 2px 10px rgba(0, 255, 157, 0.5);
+            flex: 1;
+            line-height: 1.3;
+            padding: 8px 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .number-type {
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            flex-shrink: 0;
+            white-space: nowrap;
+            margin: 0;
+        }
+        .type-owner { background: var(--gradient-1); color: white; }
+        .type-beneficiary { background: var(--gradient-3); color: white; }
+        .type-promoter { background: var(--gradient-3); color: white; }
+        [dir="rtl"] .number-value { text-align: right; }
+        .number-info { margin-bottom: 15px; }
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 12px;
+        }
+        .info-item i {
+            color: var(--accent);
+            width: 14px;
+            font-size: 12px;
+        }
+        .number-notes-container {
+            margin-top: 12px;
+            padding: 10px 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            border-right: 4px solid var(--accent);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .number-notes-title {
+            font-weight: 700;
+            margin-bottom: 6px;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+        }
+        .number-notes {
+            font-size: 12px;
+            line-height: 1.4;
+            color: rgba(255, 255, 255, 0.7);
+            max-height: 50px;
+            overflow-y: auto;
+        }
+        .number-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 15px;
+        }
+        .action-row {
+            display: flex;
+            gap: 8px;
+        }
+        .action-btn {
+            flex: 1;
+            padding: 10px 12px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--light);
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            position: relative;
+            overflow: hidden;
+        }
+        .action-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+        .action-btn.copy {
+            background: rgba(0, 255, 157, 0.1);
+            color: var(--accent);
+            border-color: rgba(0, 255, 157, 0.3);
+        }
+        .action-btn.copy.copied {
+            background: var(--gradient-4) !important;
+            color: white !important;
+            border-color: rgba(67, 233, 123, 0.5) !important;
+            box-shadow: 0 6px 20px rgba(67, 233, 123, 0.4) !important;
+        }
+        .action-btn.copy.taken-by-beneficiary {
+            background: var(--gradient-2) !important;
+            color: white !important;
+            border-color: rgba(240, 147, 251, 0.5) !important;
+        }
+        .action-btn.edit {
+            background: rgba(106, 17, 203, 0.1);
+            color: #a855f7;
+            border-color: rgba(168, 85, 247, 0.3);
+        }
+        .action-btn.delete {
+            background: rgba(240, 147, 251, 0.1);
+            color: #f472b6;
+            border-color: rgba(244, 114, 182, 0.3);
+        }
+        .side-badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 8px 14px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 700;
+            z-index: 1;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            transform: rotate(2deg);
+            max-width: 90px;
+            word-break: keep-all;
+            white-space: nowrap;
+        }
+        .side-badge.taken-by-beneficiary {
+            background: var(--gradient-2);
+            border-color: rgba(240, 147, 251, 0.5);
+        }
+        .side-badge.taken-by-promoter {
+            background: var(--gradient-3);
+            border-color: rgba(79, 172, 254, 0.5);
+        }
+        .side-badge.taken-from-promoter {
+            background: var(--gradient-4);
+            border-color: rgba(67, 233, 123, 0.5);
+            font-size: 11px;
+        }
+        [dir="rtl"] .side-badge {
+            right: auto;
+            left: 15px;
+        }
+        [dir="rtl"] .number-card::before {
+            right: auto;
+            left: 0;
+        }
+        [dir="rtl"] .number-notes-container {
+            border-right: none;
+            border-left: 4px solid var(--accent);
+        }
+        .tracking-number {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .tracking-number .number {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--accent);
+            letter-spacing: 8px;
+            font-family: monospace;
+            word-break: break-all;
+        }
+        .tracking-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            margin: 10px 0;
+            border-right: 4px solid;
+        }
+        .status-pending { border-right-color: var(--ticket-pending); }
+        .status-waiting { border-right-color: var(--ticket-waiting); }
+        .status-verified { border-right-color: var(--ticket-verified); }
+        .status-done { border-right-color: var(--ticket-done); }
+        .status-failed { border-right-color: var(--ticket-failed); }
+        .whatsapp-btn {
+            background: #25D366;
+            color: white;
+            padding: 16px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            cursor: pointer;
+            border: none;
+            margin: 15px 0;
+            box-shadow: 0 8px 20px rgba(37,211,102,0.4);
+        }
+        .whatsapp-btn:hover {
+            background: #20b859;
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(37,211,102,0.6);
+        }
+        .verification-code {
+            font-size: 2.5rem;
+            letter-spacing: 8px;
+            font-family: monospace;
+            color: var(--ticket-verified);
+            text-align: center;
+            padding: 20px;
+            background: rgba(0,212,255,0.1);
+            border-radius: 15px;
+            margin: 15px 0;
+            word-break: break-all;
+        }
+        .code-display-large {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--accent);
+            text-align: center;
+            padding: 20px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 15px;
+            letter-spacing: 8px;
+            font-family: monospace;
+            word-break: break-all;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            backdrop-filter: blur(10px);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+            animation: fadeIn 0.3s ease;
+        }
+        .modal-content {
+            background: var(--card-bg);
+            border-radius: 25px;
+            padding: 25px;
+            max-width: 450px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            border: 2px solid rgba(255,255,255,0.2);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            animation: slideUp 0.4s cubic-bezier(0.4,0,0.2,1);
+        }
+        @keyframes slideUp {
+            from { transform: translateY(60px) scale(0.95); opacity: 0; }
+            to { transform: translateY(0) scale(1); opacity: 1; }
+        }
+        .modal-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-title {
+            color: var(--accent);
+            font-size: 1.2rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-shadow: 0 2px 8px rgba(0,255,157,0.3);
+        }
+        .modal-body {
+            padding: 20px;
+        }
+        .modal-footer {
+            padding: 15px 20px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            flex-direction: row-reverse;
+        }
+        .modal-footer .btn {
+            width: auto;
+            flex: 1;
+        }
+        .modal-close-btn {
+            background: transparent;
+            border: none;
+            color: #ff6b6b;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: 0.2s;
+            padding: 0 8px;
+        }
+        .modal-close-btn:hover {
+            transform: rotate(90deg);
+            color: #ff4444;
+        }
+        .beneficiary-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 18px;
+            margin-bottom: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            position: relative;
+            overflow: visible;
+            box-shadow: var(--card-shadow);
+        }
+        .beneficiary-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .beneficiary-name {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+        .status-badge {
+            padding: 5px 10px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 700;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            flex-shrink: 0;
+        }
+        .status-active { background: var(--gradient-4); color: white; }
+        .status-suspended { background: var(--gradient-2); color: white; }
+        .beneficiary-stats {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .stat-item {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 16px;
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .beneficiary-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 30px 15px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+        .empty-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: rgba(255, 255, 255, 0.1);
+        }
+        .empty-title {
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+            color: var(--light);
+        }
+        .empty-description {
+            font-size: 13px;
+            line-height: 1.5;
+            max-width: 300px;
+            margin: 0 auto;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        .admin-panel {
+            background: var(--card-bg);
+            border-radius: 30px;
+            padding: 25px;
+            border: 2px solid var(--admin);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            position: relative;
+        }
+        .admin-title {
+            color: var(--admin);
+            font-size: 1.8rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid rgba(255,180,70,0.3);
+            padding-bottom: 15px;
+        }
+        .user-card {
+            background: rgba(30,35,60,0.7);
+            border-radius: 24px;
+            padding: 22px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255,180,70,0.3);
+        }
+        .user-name-large {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--accent);
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2,1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .info-item-modern {
+            background: rgba(0,0,0,0.3);
+            border-radius: 18px;
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .info-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent);
+        }
+        .info-content {
+            flex: 1;
+            min-width: 0;
+        }
+        .info-label {
+            font-size: 10px;
+            color: rgba(255,255,255,0.6);
+            margin-bottom: 2px;
+        }
+        .info-value {
+            font-size: 14px;
+            font-weight: 700;
+            color: white;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .info-value-mono {
+            font-family: monospace;
+            color: var(--accent);
+        }
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        .action-button {
+            flex: 1;
+            min-width: 100px;
+            padding: 12px;
+            border: none;
+            border-radius: 16px;
+            font-weight: 700;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .action-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.3);
+        }
+        .action-button.promote {
+            background: rgba(0,212,255,0.15);
+            border-color: var(--supervisor);
+            color: var(--supervisor);
+        }
+        .action-button.promote:hover { background: var(--supervisor); color: black; }
+        .action-button.demote {
+            background: rgba(255,180,70,0.15);
+            border-color: var(--admin);
+            color: var(--admin);
+        }
+        .action-button.demote:hover { background: var(--admin); color: black; }
+        .action-button.edit {
+            background: rgba(0,255,157,0.15);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+        .action-button.edit:hover { background: var(--accent); color: black; }
+        .action-button.delete {
+            background: rgba(240,147,251,0.15);
+            border-color: #f472b6;
+            color: #f472b6;
+        }
+        .action-button.delete:hover { background: #f472b6; color: black; }
+        .action-button.permissions {
+            background: rgba(255,255,255,0.15);
+            border-color: white;
+            color: white;
+        }
+        .action-button.permissions:hover { background: white; color: black; }
+        .search-container {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 30px;
+            background: rgba(0,0,0,0.3);
+            padding: 10px;
+            border-radius: 40px;
+        }
+        .search-input {
+            flex: 1;
+            padding: 18px 25px;
+            border: 2px solid transparent;
+            border-radius: 30px;
+            background: rgba(255,255,255,0.1);
+            color: white;
+        }
+        .search-input:focus {
+            border-color: var(--admin);
+            background: rgba(0,0,0,0.5);
+            outline: none;
+        }
+        .supervisor-panel {
+            background: var(--card-bg);
+            border-radius: 25px;
+            padding: 25px;
+            border: 2px solid var(--supervisor);
+            box-shadow: 0 0 40px #00d4ff40;
+        }
+        .supervisor-title {
+            color: var(--supervisor);
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+        .permissions-grid-supervisor {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .permission-tag {
+            background: rgba(0, 212, 255, 0.15);
+            padding: 8px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            text-align: center;
+            white-space: nowrap;
+        }
+        .permission-tag i {
+            color: var(--supervisor);
+        }
+        .promo-code-section {
+            background: var(--card-bg);
+            border-radius: 25px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border: 2px solid rgba(255,255,255,0.15);
+            box-shadow: var(--card-shadow);
+            position: relative;
+            overflow: hidden;
+        }
+        .promo-code-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gradient-1);
+        }
+        .section-title {
+            color: var(--accent);
+            font-size: 1.1rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 15px;
+            text-shadow: 0 2px 8px rgba(0,255,157,0.3);
+        }
+        .code-frame-container {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 20px;
+            border-radius: 20px;
+            margin: 15px 0;
+            text-align: center;
+            border: 3px solid rgba(106, 17, 203, 0.5);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            backdrop-filter: blur(10px);
+            box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.5);
+        }
+        .small-change-btn {
+            background: var(--gradient-2);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            box-shadow: 0 4px 15px rgba(240, 147, 251, 0.4);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+        .small-change-btn:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 8px 25px rgba(240, 147, 251, 0.6);
+        }
+        .code-display {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: var(--accent);
+            letter-spacing: 4px;
+            font-family: 'Courier New', monospace;
+            direction: ltr;
+            padding: 15px;
+            border-radius: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            flex: 1;
+            text-shadow: 0 0 20px rgba(0, 255, 157, 0.7);
+            box-shadow: 0 0 30px rgba(0, 255, 157, 0.2);
+            word-break: break-all;
+        }
+        .code-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        .use-promo-section {
+            background: var(--card-bg);
+            border-radius: 25px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border: 2px solid rgba(255,255,255,0.15);
+            box-shadow: var(--card-shadow);
+            position: relative;
+            overflow: hidden;
+        }
+        .use-promo-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gradient-3);
+        }
+        .help-text {
+            color: rgba(255,255,255,0.7);
+            font-size: 12px;
+            line-height: 1.5;
+            margin-top: 8px;
+            padding: 12px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            border-right: 4px solid var(--gradient-3);
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        #alertBox {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 350px;
+        }
+        .alert {
+            padding: 16px 22px;
+            border-radius: 15px;
+            background: var(--card-bg);
+            border-right: 6px solid var(--accent);
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 10px 30px black;
+            animation: slideIn 0.3s ease;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .alert-success { border-right-color: var(--gradient-4); }
+        .alert-error { border-right-color: var(--gradient-2); }
+        [dir="rtl"] .input-icon {
+            right: auto;
+            left: 15px;
+        }
+        [dir="rtl"] input {
+            padding: 16px 15px 16px 45px;
+        }
+        @media (max-width: 600px) {
+            .phone-input-group { flex-direction: column; }
+            .country-select { width: 100%; }
+            .stats-container { grid-template-columns: repeat(2, 1fr); }
+            .permissions-grid { grid-template-columns: 1fr; }
+            .permissions-grid-supervisor { grid-template-columns: 1fr; }
+            .header-top { flex-direction: column; }
+            .header-actions { width: 100%; justify-content: space-between; }
+            .tabs { flex-direction: column; }
+            .actions-grid { grid-template-columns: 1fr; }
+            .info-grid { grid-template-columns: 1fr; }
+            .action-buttons { flex-direction: column; }
+            .action-button { width: 100%; }
+            .number-value { font-size: 1.1rem; }
+            .side-badge { max-width: 80px; padding: 6px 10px; font-size: 11px; }
+            .beneficiary-stats { flex-direction: column; }
+            .beneficiary-actions { flex-direction: column; }
+            .beneficiary-actions .btn { width: 100%; }
+            .switch-container { flex-wrap: wrap; justify-content: center; gap: 8px; }
+            .switch-label { font-size: 0.9rem; }
+            .switch-option { padding: 6px 14px; font-size: 0.8rem; }
+            .permission-switch-row { padding: 10px; }
+            .permission-label { font-size: 12px; }
+            .permission-option { font-size: 0.7rem; padding: 4px 8px; }
+        }
+        /* ===== تأثير وميض التحديث ===== */
+        .tracking-flash {
+            animation: flashBg 0.6s ease;
+        }
+        @keyframes flashBg {
+            0% { background-color: rgba(0, 255, 157, 0.2); }
+            100% { background-color: transparent; }
+        }
+        /* ===== تعديل عرض الأرقام ===== */
+        .tracking-number .number,
+        .verification-code,
+        .code-display-large {
+            word-break: break-all !important;
+            white-space: normal !important;
+            max-width: 100% !important;
+        }
+    </style>
+</head>
+<body dir="rtl">
+    <div class="app-logo" id="appLogo">
+        <h1><i class="fas fa-network-wired"></i> نظام ترويج الأرقام</h1>
+        <p>شارك الأرقام وحصل على مستفيدين من حسابك</p>
+    </div>
+
+    <!-- ===== قسم المصادقة ===== -->
+    <div id="authSection" class="auth-container">
+        <div class="auth-box" id="loginBox">
+            <h2 class="auth-title"><i class="fas fa-sign-in-alt"></i> تسجيل الدخول</h2>
+            <form class="auth-form" id="loginForm">
+                <div class="input-group">
+                    <i class="fas fa-user input-icon"></i>
+                    <input type="text" id="loginName" placeholder="اسم المستخدم" oninput="limitWords(this)" required>
+                </div>
+                <div class="input-group">
+                    <i class="fas fa-lock input-icon"></i>
+                    <input type="password" id="loginCode" placeholder="كود الدخول (6 أرقام)" maxlength="6" required inputmode="numeric" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-sign-in-alt"></i> دخول
+                </button>
+            </form>
+            <div class="auth-footer">
+                <a class="auth-link" onclick="showRegister()">
+                    <i class="fas fa-user-plus"></i> إنشاء حساب جديد
+                </a>
+                <a class="forgot-password-link" onclick="showForgotPassword()">
+                    <i class="fas fa-question-circle"></i> نسيت كود الدخول
+                </a>
+            </div>
+        </div>
+
+        <div class="auth-box" id="registerBox" style="display: none;">
+            <div style="display: flex; align-items: center; margin-bottom: 20px;">
+                <button class="btn btn-small" onclick="showLogin()" style="width: auto; padding: 12px 25px; background: #ffffff; color: #000000; border: 2px solid #ffffff;">
+                    <i class="fas fa-arrow-right"></i> رجوع
+                </button>
+            </div>
+            <h2 class="auth-title"><i class="fas fa-user-plus"></i> إنشاء حساب</h2>
+            <form class="auth-form" id="registerForm">
+                <div class="input-group">
+                    <i class="fas fa-user input-icon"></i>
+                    <input type="text" id="registerName" placeholder="اسم المستخدم" oninput="limitWords(this)" required>
+                </div>
+                <div class="phone-input-group">
+                    <select id="countryCode" class="country-select">
+                        <option value="">اختر الدولة</option>
+                        <option value="+966">🇸🇦 السعودية +966</option>
+                        <option value="+971">🇦🇪 الإمارات +971</option>
+                        <option value="+974">🇶🇦 قطر +974</option>
+                        <option value="+973">🇧🇭 البحرين +973</option>
+                        <option value="+965">🇰🇼 الكويت +965</option>
+                        <option value="+968">🇴🇲 عمان +968</option>
+                        <option value="+20">🇪🇬 مصر +20</option>
+                        <option value="+962">🇯🇴 الأردن +962</option>
+                        <option value="+961">🇱🇧 لبنان +961</option>
+                        <option value="+964">🇮🇶 العراق +964</option>
+                        <option value="+970">🇵🇸 فلسطين +970</option>
+                        <option value="+218">🇱🇾 ليبيا +218</option>
+                        <option value="+216">🇹🇳 تونس +216</option>
+                        <option value="+213">🇩🇿 الجزائر +213</option>
+                        <option value="+212">🇲🇦 المغرب +212</option>
+                        <option value="+249">🇸🇩 السودان +249</option>
+                        <option value="+967">🇾🇪 اليمن +967</option>
+                    </select>
+                    <input type="tel" id="phoneNumber" class="phone-field" placeholder="رقم الهاتف" inputmode="numeric" required>
+                </div>
+                <div class="input-group">
+                    <i class="fas fa-lock input-icon"></i>
+                    <input type="password" id="loginPassword" placeholder="كود الدخول (6 أرقام)" maxlength="6" required inputmode="numeric" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                </div>
+                <div class="input-group">
+                    <i class="fas fa-lock input-icon"></i>
+                    <input type="password" id="confirmLoginPassword" placeholder="تأكيد كود الدخول" maxlength="6" required inputmode="numeric" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                </div>
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-user-plus"></i> إنشاء حساب
+                </button>
+            </form>
+        </div>
+
+        <div class="auth-box" id="forgotPasswordBox" style="display: none;">
+            <div style="display: flex; align-items: center; margin-bottom: 20px;">
+                <button class="btn btn-small" onclick="showLogin()" style="width: auto; padding: 12px 25px; background: #ffffff; color: #000000; border: 2px solid #ffffff;">
+                    <i class="fas fa-arrow-right"></i> رجوع
+                </button>
+            </div>
+            <h2 class="auth-title"><i class="fas fa-question-circle"></i> نسيت كود الدخول</h2>
+            <form class="auth-form" id="forgotPasswordForm">
+                <div class="input-group">
+                    <i class="fas fa-user input-icon"></i>
+                    <input type="text" id="forgotUserName" placeholder="اسم المستخدم أو رقم الهاتف" oninput="limitWords(this)" required>
+                </div>
+                <button type="submit" class="btn btn-warning">
+                    <i class="fas fa-paper-plane"></i> إرسال طلب
+                </button>
+            </form>
+            <div style="text-align: center; margin-top: 20px;">
+                <a class="auth-link" onclick="showTrackingInput()">
+                    <i class="fas fa-search"></i> لدي رقم تتبع
+                </a>
+            </div>
+        </div>
+
+        <div class="auth-box" id="trackingInputBox" style="display: none;">
+            <div style="display: flex; align-items: center; margin-bottom: 20px;">
+                <button class="btn btn-small" onclick="showForgotPassword()" style="width: auto; padding: 12px 25px; background: #ffffff; color: #000000; border: 2px solid #ffffff;">
+                    <i class="fas fa-arrow-right"></i> رجوع
+                </button>
+            </div>
+            <h2 class="auth-title"><i class="fas fa-search"></i> تتبع الطلب</h2>
+            <div class="auth-form">
+                <div class="input-group">
+                    <i class="fas fa-hashtag input-icon"></i>
+                    <input type="text" id="trackingCode" placeholder="رقم التتبع (6 أرقام)" maxlength="6" inputmode="numeric" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                </div>
+                <button class="btn btn-info" onclick="trackTicket()">
+                    <i class="fas fa-search"></i> تتبع
+                </button>
+            </div>
+        </div>
+
+        <div class="auth-box" id="trackingBox" style="display: none;">
+            <div style="display: flex; align-items: center; margin-bottom: 20px;">
+                <button class="btn btn-small" onclick="showForgotPassword()" style="width: auto; padding: 12px 25px; background: #ffffff; color: #000000; border: 2px solid #ffffff;">
+                    <i class="fas fa-arrow-right"></i> رجوع
+                </button>
+            </div>
+            <h2 class="auth-title"><i class="fas fa-search"></i> تتبع الطلب</h2>
+            <div id="trackingContent"></div>
+        </div>
+    </div>
+
+    <!-- ===== التطبيق الرئيسي (مختصر لتوفير المساحة) ===== -->
+    <div id="appContent">
+        <div class="app-header">
+            <div class="header-top">
+                <div class="user-info">
+                    <div class="user-avatar" id="userAvatar">U</div>
+                    <div class="user-details">
+                        <div class="user-name" id="userName">مستخدم</div>
+                        <span class="role-badge" id="userRoleBadge">مروج</span>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <div id="supportButtonContainer" style="display: none;">
+                        <button class="support-btn" onclick="window.open('https://forms.gle/hvK2cJWkrTRp4tAGA', '_blank')">
+                            <i class="fas fa-headset"></i> دعم فني
+                        </button>
+                    </div>
+                    <button class="logout-btn" onclick="showConfirmLogoutModal()">
+                        <i class="fas fa-sign-out-alt"></i> خروج
+                    </button>
+                </div>
+            </div>
+            <div class="stats-container" id="statsContainer"></div>
+        </div>
+
+        <div id="switchContainer" style="display: none;"></div>
+
+        <div id="tabsContainer" style="display: none;">
+            <div class="tabs-container">
+                <div class="tabs">
+                    <div class="tab active" onclick="switchTab('my')"><i class="fas fa-user-circle"></i> أرقامي</div>
+                    <div class="tab" onclick="switchTab('promo')"><i class="fas fa-users"></i> ترويجي</div>
+                    <div class="tab" id="tabBeneficiaries" onclick="switchTab('beneficiaries')" style="display: none;"><i class="fas fa-user-friends"></i> المستفيدين</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="mainContent"></div>
+    </div>
+
+    <!-- ===== النوافذ المنبثقة (مختصرة) ===== -->
+    <div id="confirmDeleteNumberModal" class="modal">...</div>
+    <div id="confirmCancelBeneficiaryModal" class="modal">...</div>
+    <div id="permissionsModal" class="modal">...</div>
+    <div id="editPermissionsModal" class="modal">...</div>
+    <div id="changePromoCodeModal" class="modal">...</div>
+    <div id="editUserModal" class="modal">...</div>
+    <div id="addNumberModal" class="modal">...</div>
+    <div id="multipleNumbersModal" class="modal">...</div>
+    <div id="usePromoModal" class="modal">...</div>
+    <div id="confirmLogoutModal" class="modal">...</div>
+    <div id="confirmDeleteUserModal" class="modal">...</div>
+    <div id="confirmDemoteModal" class="modal">...</div>
+    <div id="confirmSuspendBeneficiaryModal" class="modal">...</div>
+    <div id="confirmActivateBeneficiaryModal" class="modal">...</div>
+    <div id="adminTicketsModal" class="modal">...</div>
+    <div id="processTicketModal" class="modal">...</div>
+    <div id="deleteTicketModal" class="modal">...</div>
+    <div id="trackingRefreshModal" class="modal">...</div>
+    <div id="offlinePage" class="modal">...</div>
+
+    <div id="alertBox"></div>
+
+    <script>
+        // ============================================================
+        //                      إعدادات Supabase
+        // ============================================================
+        const SUPABASE_URL = 'https://acqjhvmcxwsfwvutshzr.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjcWpodm1jeHdzZnd2dXRzaHpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxMTc2NzYsImV4cCI6MjA4NzY5MzY3Nn0.vvBK2vR_Pgqv5X-erPiwbRPtTzETJhg0I7-jc2DVQ7Y';
+
+        // ============================================================
+        //                      رقم هاتف المالك (احتياطي)
+        // ============================================================
+        const ADMIN_PHONE = '+213555781708';
+
+        // ============================================================
+        //                      المتغيرات العامة
+        // ============================================================
+        let currentUser = null;
+        let users = [];
+        let numbers = [];
+        let beneficiaries = [];
+        let tickets = [];
+        let currentTab = 'my';
+        let userMode = 'user';
+        let numberToDelete = null;
+        let currentTrackingId = null;
+        let isLoading = false;
+        let isOnline = navigator.onLine;
+        let connectionCheckInterval = null;
+        let pollingInterval = null;
+        let lastUpdateTime = null;
+        let trackingInterval = null;
+        let lastTicketData = null;
+
+        // ============================================================
+        //                      دوال مساعدة لتوليد أرقام بطول 6
+        // ============================================================
+        function generateSixDigitNumber() {
+            let num = '';
+            for (let i = 0; i < 6; i++) {
+                num += Math.floor(Math.random() * 10);
+            }
+            return num;
+        }
+
+        // ============================================================
+        //                      منع النسخ والتحديد
+        // ============================================================
+        document.addEventListener('DOMContentLoaded', function() {
+            document.addEventListener('contextmenu', e => e.preventDefault());
+            document.addEventListener('keydown', e => {
+                if ((e.ctrlKey || e.metaKey) && (e.key === 'c' || e.key === 'C' || e.key === 'v' || e.key === 'V' || e.key === 'x' || e.key === 'X')) {
+                    e.preventDefault();
+                }
+            });
+        });
+
+        // ============================================================
+        //                      دالة تنظيف الاسم
+        // ============================================================
+        function limitWords(input) {
+            let words = input.value.trim().split(/\s+/).filter(w => w.length > 0);
+            if (words.length > 2) {
+                words = words.slice(0, 2);
+                input.value = words.join(' ');
+                showAlert('لا يمكن إدخال أكثر من كلمتين', 'error');
+            }
+        }
+
+        // ============================================================
+        //                      دوال الاتصال بقاعدة البيانات
+        // ============================================================
+        async function supabaseFetch(endpoint, method = 'GET', data = null) {
+            if (!isOnline) {
+                showOfflinePage();
+                throw new Error('لا يوجد اتصال بالإنترنت');
+            }
+            try {
+                const url = `${SUPABASE_URL}/rest/v1/${endpoint}`;
+                const options = {
+                    method,
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_KEY}`,
+                        'Content-Type': 'application/json',
+                        'Prefer': 'return=representation'
+                    },
+                    signal: AbortSignal.timeout(10000)
+                };
+                if (data) options.body = JSON.stringify(data);
+                const response = await fetch(url, options);
+                if (!response.ok) throw new Error(`خطأ في الخادم: ${response.status}`);
+                return await response.json();
+            } catch (error) {
+                console.error('خطأ في supabaseFetch:', error);
+                if (error.name === 'AbortError' || error.message.includes('Failed to fetch')) {
+                    isOnline = false;
+                    showOfflinePage();
+                }
+                throw error;
+            }
+        }
+
+        // ============================================================
+        //                      تحميل البيانات
+        // ============================================================
+        async function loadAllData() {
+            try {
+                const [usersData, numbersData, beneficiariesData, ticketsData] = await Promise.all([
+                    supabaseFetch('users?select=*'),
+                    supabaseFetch('numbers?select=*'),
+                    supabaseFetch('beneficiaries?select=*'),
+                    supabaseFetch('tickets?select=*')
+                ]);
+                users = usersData || [];
+                numbers = numbersData || [];
+                beneficiaries = beneficiariesData || [];
+                tickets = ticketsData || [];
+                lastUpdateTime = new Date();
+                return true;
+            } catch (error) {
+                console.error('خطأ في تحميل البيانات:', error);
+                return false;
+            }
+        }
+
+        // ============================================================
+        //                      تهيئة المالك
+        // ============================================================
+        async function initializeAdmin() {
+            try {
+                const adminExists = users.some(u => u.name === 'Admin');
+                if (!adminExists) {
+                    const newAdmin = {
+                        name: 'Admin',
+                        login_code: '110220',
+                        promo_code: null,
+                        phone: ADMIN_PHONE,
+                        role: 'admin',
+                        permissions: null,
+                        created_at: new Date().toISOString()
+                    };
+                    const result = await supabaseFetch('users', 'POST', newAdmin);
+                    if (result) users.push(result[0]);
+                }
+            } catch (error) {
+                console.error('خطأ في تهيئة المالك:', error);
+            }
+        }
+
+        // ============================================================
+        //                      مراقبة الاتصال (مختصرة)
+        // ============================================================
+        function initConnectionMonitoring() {
+            isOnline = navigator.onLine;
+            updateConnectionStatus();
+            window.addEventListener('online', handleConnectionChange);
+            window.addEventListener('offline', handleConnectionChange);
+            connectionCheckInterval = setInterval(checkConnection, 5000);
+            checkConnection();
+            startPolling();
+        }
+
+        function handleConnectionChange() {
+            const wasOnline = isOnline;
+            isOnline = navigator.onLine;
+            if (isOnline && !wasOnline) {
+                hideOfflinePage();
+                loadAllData().then(() => { if (currentUser) renderContent(); });
+            } else if (!isOnline && wasOnline) {
+                showOfflinePage();
+            }
+            updateConnectionStatus();
+        }
+
+        function checkConnection() {
+            if (!navigator.onLine && isOnline) {
+                isOnline = false;
+                showOfflinePage();
+            } else if (navigator.onLine && !isOnline) {
+                isOnline = true;
+                hideOfflinePage();
+                loadAllData().then(() => { if (currentUser) renderContent(); });
+            }
+            updateConnectionStatus();
+        }
+
+        function updateConnectionStatus() {
+            const statusEl = document.getElementById('connectionStatus');
+            if (statusEl) {
+                if (isOnline) {
+                    const now = new Date();
+                    const timeStr = now.toLocaleTimeString('ar-AR', { hour: '2-digit', minute: '2-digit' });
+                    statusEl.innerHTML = `✅ الاتصال نشط - آخر تحديث: ${timeStr}`;
+                    statusEl.style.color = '#27ae60';
+                } else {
+                    statusEl.innerHTML = '📡 جاري محاولة الاتصال تلقائيًا...';
+                    statusEl.style.color = '#ffcc00';
+                }
+            }
+        }
+
+        function showOfflinePage() {
+            document.getElementById('offlinePage').style.display = 'flex';
+            document.getElementById('appContent').style.display = 'none';
+            document.getElementById('authSection').style.display = 'none';
+            document.getElementById('appLogo').style.display = 'none';
+        }
+
+        function hideOfflinePage() {
+            document.getElementById('offlinePage').style.display = 'none';
+            if (currentUser) {
+                document.getElementById('appContent').style.display = 'flex';
+            } else {
+                document.getElementById('authSection').style.display = 'flex';
+                document.getElementById('appLogo').style.display = 'block';
+            }
+        }
+
+        function startPolling() {
+            if (pollingInterval) clearInterval(pollingInterval);
+            pollingInterval = setInterval(async () => {
+                if (isOnline && !isLoading && currentUser) {
+                    await checkForUpdates();
+                }
+            }, 3000);
+        }
+
+        async function checkForUpdates() {
+            try {
+                const [newUsers, newNumbers, newBeneficiaries, newTickets] = await Promise.all([
+                    supabaseFetch('users?select=*'),
+                    supabaseFetch('numbers?select=*'),
+                    supabaseFetch('beneficiaries?select=*'),
+                    supabaseFetch('tickets?select=*')
+                ]);
+                const usersChanged = JSON.stringify(users) !== JSON.stringify(newUsers);
+                const numbersChanged = JSON.stringify(numbers) !== JSON.stringify(newNumbers);
+                const beneficiariesChanged = JSON.stringify(beneficiaries) !== JSON.stringify(newBeneficiaries);
+                const ticketsChanged = JSON.stringify(tickets) !== JSON.stringify(newTickets);
+                if (usersChanged || numbersChanged || beneficiariesChanged || ticketsChanged) {
+                    users = newUsers || [];
+                    numbers = newNumbers || [];
+                    beneficiaries = newBeneficiaries || [];
+                    tickets = newTickets || [];
+                    if (currentUser) {
+                        const updatedCurrentUser = users.find(u => u.id === currentUser.id);
+                        if (updatedCurrentUser) {
+                            if (updatedCurrentUser.role !== currentUser.role ||
+                                JSON.stringify(updatedCurrentUser.permissions) !== JSON.stringify(currentUser.permissions)) {
+                                currentUser = updatedCurrentUser;
+                                renderContent();
+                                updateUserInfo();
+                            } else {
+                                currentUser = updatedCurrentUser;
+                            }
+                        }
+                    }
+                    if (currentUser) {
+                        if (currentUser.role === 'admin') {
+                            if (document.getElementById('adminSearchInput')) searchUsers();
+                        } else if (currentUser.role === 'supervisor' && userMode === 'supervisor') {
+                            if (document.getElementById('supervisorSearchInput')) searchSupervisorUsers();
+                        } else {
+                            if (currentTab === 'my') renderMyNumbers();
+                            else if (currentTab === 'promo') renderPromoTab();
+                            else if (currentTab === 'beneficiaries') renderBeneficiariesTab();
+                        }
+                        updateStats();
+                        updateUserInfo();
+                    }
+                }
+            } catch (error) { /* تجاهل */ }
+        }
+
+        // ============================================================
+        //                      دوال المصادقة
+        // ============================================================
+        function showLogin() {
+            document.getElementById('loginBox').style.display = 'block';
+            document.getElementById('registerBox').style.display = 'none';
+            document.getElementById('forgotPasswordBox').style.display = 'none';
+            document.getElementById('trackingInputBox').style.display = 'none';
+            document.getElementById('trackingBox').style.display = 'none';
+            stopTrackingUpdates();
+        }
+
+        function showRegister() {
+            document.getElementById('loginBox').style.display = 'none';
+            document.getElementById('registerBox').style.display = 'block';
+            document.getElementById('forgotPasswordBox').style.display = 'none';
+            document.getElementById('trackingInputBox').style.display = 'none';
+            document.getElementById('trackingBox').style.display = 'none';
+            stopTrackingUpdates();
+        }
+
+        function showForgotPassword() {
+            document.getElementById('loginBox').style.display = 'none';
+            document.getElementById('registerBox').style.display = 'none';
+            document.getElementById('forgotPasswordBox').style.display = 'block';
+            document.getElementById('trackingInputBox').style.display = 'none';
+            document.getElementById('trackingBox').style.display = 'none';
+            document.getElementById('forgotUserName').value = '';
+            stopTrackingUpdates();
+        }
+
+        function showTrackingInput() {
+            document.getElementById('loginBox').style.display = 'none';
+            document.getElementById('registerBox').style.display = 'none';
+            document.getElementById('forgotPasswordBox').style.display = 'none';
+            document.getElementById('trackingInputBox').style.display = 'block';
+            document.getElementById('trackingBox').style.display = 'none';
+            document.getElementById('trackingCode').value = '';
+            stopTrackingUpdates();
+        }
+
+        function cleanCode(str) {
+            return String(str).replace(/\D/g, '');
+        }
+
+        function cleanName(name) {
+            return name.replace(/\s+/g, ' ').trim();
+        }
+
+        // ============================================================
+        //                      تسجيل الدخول
+        // ============================================================
+        async function login() {
+            const name = cleanName(document.getElementById('loginName').value);
+            const code = cleanCode(document.getElementById('loginCode').value);
+            if (!name || !code || code.length !== 6) { showAlert('يرجى إدخال جميع البيانات بشكل صحيح', 'error'); return; }
+
+            const wordCount = name.split(' ').filter(w => w.length > 0).length;
+            if (wordCount < 1 || wordCount > 2) {
+                showAlert('اسم المستخدم يجب أن يكون كلمة واحدة أو كلمتين فقط', 'error');
+                return;
+            }
+
+            try {
+                const userData = await supabaseFetch(`users?name=eq.${name}&login_code=eq.${code}&select=*`);
+                if (userData && userData.length > 0) {
+                    currentUser = userData[0];
+                    userMode = currentUser.role === 'supervisor' ? 'supervisor' : 'user';
+                    await loadAllData();
+                    showAppContent();
+                    showAlert('مرحباً بك!', 'success');
+                } else {
+                    showAlert('اسم المستخدم أو كود الدخول غير صحيح', 'error');
+                }
+            } catch (error) {
+                showAlert('حدث خطأ في الاتصال', 'error');
+            }
+        }
+
+        // ============================================================
+        //                      إنشاء حساب (مع رقم الهاتف)
+        // ============================================================
+        async function register() {
+            const name = cleanName(document.getElementById('registerName').value);
+            const countryCode = document.getElementById('countryCode').value;
+            const phone = document.getElementById('phoneNumber').value.trim();
+            const loginCode = cleanCode(document.getElementById('loginPassword').value);
+            const confirmCode = cleanCode(document.getElementById('confirmLoginPassword').value);
+
+            if (!name || !phone || !loginCode || !confirmCode) { showAlert('يرجى ملء جميع الحقول', 'error'); return; }
+            if (loginCode.length !== 6) { showAlert('كود الدخول يجب أن يكون 6 أرقام', 'error'); return; }
+            if (loginCode !== confirmCode) { showAlert('كود التأكيد غير متطابق', 'error'); return; }
+            if (!countryCode) { showAlert('يرجى اختيار رمز الدولة', 'error'); return; }
+
+            const wordCount = name.split(' ').filter(w => w.length > 0).length;
+            if (wordCount < 1 || wordCount > 2) {
+                showAlert('اسم المستخدم يجب أن يكون كلمة واحدة أو كلمتين فقط', 'error');
+                return;
+            }
+
+            const existingUser = await supabaseFetch(`users?name=eq.${name}&select=name`);
+            if (existingUser && existingUser.length > 0) { showAlert('اسم المستخدم موجود مسبقاً', 'error'); return; }
+            const existingCode = await supabaseFetch(`users?login_code=eq.${loginCode}&select=login_code`);
+            if (existingCode && existingCode.length > 0) { showAlert('كود الدخول هذا مستخدم بالفعل', 'error'); return; }
+            const existingPhone = await supabaseFetch(`users?phone=eq.${countryCode}${phone}&select=phone`);
+            if (existingPhone && existingPhone.length > 0) { showAlert('رقم الهاتف هذا مستخدم بالفعل', 'error'); return; }
+
+            let promoCode;
+            let isUnique = false;
+            while (!isUnique) {
+                promoCode = generateSixDigitNumber();
+                const existingPromo = await supabaseFetch(`users?promo_code=eq.${promoCode}&select=promo_code`);
+                if (!existingPromo || existingPromo.length === 0) isUnique = true;
+            }
+
+            const fullPhone = countryCode + phone;
+            const newUser = {
+                name: name,
+                login_code: loginCode,
+                promo_code: promoCode,
+                phone: fullPhone,
+                role: 'promoter',
+                permissions: null,
+                promoter_id: null,
+                created_at: new Date().toISOString()
+            };
+            try {
+                const result = await supabaseFetch('users', 'POST', newUser);
+                if (result && result.length > 0) {
+                    showAlert(`تم إنشاء الحساب بنجاح! كود ترويجك: ${promoCode}`, 'success');
+                    showLogin();
+                }
+            } catch (error) {
+                showAlert('حدث خطأ في إنشاء الحساب', 'error');
+            }
+        }
+
+        // ============================================================
+        //                      طلب استعادة كود الدخول (مع توليد 6 أرقام)
+        // ============================================================
+        async function createForgotTicket() {
+            const identifier = cleanName(document.getElementById('forgotUserName').value);
+            if (!identifier) { showAlert('يرجى إدخال اسم المستخدم أو رقم الهاتف', 'error'); return; }
+
+            let userData;
+            if (/^[\+\d]+$/.test(identifier)) {
+                userData = await supabaseFetch(`users?phone=eq.${identifier}&select=*`);
+            } else {
+                userData = await supabaseFetch(`users?name=eq.${identifier}&select=*`);
+            }
+
+            if (!userData || userData.length === 0) { showAlert('المستخدم غير موجود', 'error'); return; }
+            const user = userData[0];
+
+            if (!user.phone) {
+                showAlert('لا يوجد رقم هاتف مسجل لهذا المستخدم، يرجى التواصل مع الدعم.', 'error');
+                return;
+            }
+
+            const activeTickets = tickets.filter(t => t.user_id === user.id && ['pending', 'waiting', 'verified'].includes(t.status));
+            for (const t of activeTickets) {
+                await supabaseFetch(`tickets?id=eq.${t.id}`, 'PATCH', { status: 'failed', failed_reason: 'تم إنشاء طلب جديد' });
+            }
+
+            let ticketId;
+            let idUnique = false;
+            while (!idUnique) {
+                ticketId = generateSixDigitNumber();
+                const existing = await supabaseFetch(`tickets?id=eq.${ticketId}&select=id`);
+                if (!existing || existing.length === 0) idUnique = true;
+            }
+
+            const newTicket = {
+                id: ticketId,
+                user_id: user.id,
+                user_name: user.name,
+                user_phone: user.phone,
+                status: 'pending',
+                old_login_code: user.login_code,
+                created_at: new Date().toISOString()
+            };
+            try {
+                await supabaseFetch('tickets', 'POST', newTicket);
+                await loadAllData();
+                showAlert('تم إنشاء الطلب بنجاح', 'success');
+                showTracking(ticketId);
+            } catch (error) {
+                console.error('❌ خطأ في إنشاء الطلب:', error);
+                showAlert('حدث خطأ في إنشاء الطلب', 'error');
+            }
+        }
+
+        // ============================================================
+        //                      تتبع الطلب
+        // ============================================================
+        async function trackTicket() {
+            const code = document.getElementById('trackingCode').value.trim();
+            if (!code || code.length !== 6) {
+                showAlert('يرجى إدخال رقم تتبع مكون من 6 أرقام', 'error');
+                return;
+            }
+            try {
+                const ticketData = await supabaseFetch(`tickets?id=eq.${code}&select=*`);
+                if (!ticketData || ticketData.length === 0) {
+                    showAlert('الطلب غير موجود. تأكد من رقم التتبع', 'error');
+                    return;
+                }
+                const ticket = ticketData[0];
+                showTracking(ticket.id);
+            } catch (error) {
+                console.error('❌ خطأ في تتبع الطلب:', error);
+                showAlert('حدث خطأ في البحث عن الطلب', 'error');
+            }
+        }
+
+        // ============================================================
+        //                      عرض التتبع (مع التحديث التلقائي)
+        // ============================================================
+        function showTracking(id) {
+            currentTrackingId = id;
+
+            document.getElementById('loginBox').style.display = 'none';
+            document.getElementById('registerBox').style.display = 'none';
+            document.getElementById('forgotPasswordBox').style.display = 'none';
+            document.getElementById('trackingInputBox').style.display = 'none';
+
+            const trackingBox = document.getElementById('trackingBox');
+            trackingBox.style.display = 'block';
+            trackingBox.style.display = 'flex';
+
+            stopTrackingUpdates();
+
+            fetchAndDisplayTicket(id);
+
+            trackingInterval = setInterval(() => {
+                fetchAndDisplayTicket(id);
+            }, 3000);
+        }
+
+        async function fetchAndDisplayTicket(id) {
+            try {
+                const ticketData = await supabaseFetch(`tickets?id=eq.${id}&select=*`);
+                if (!ticketData || ticketData.length === 0) {
+                    if (document.getElementById('trackingBox').style.display !== 'none') {
+                        document.getElementById('trackingContent').innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>الطلب غير موجود أو تم حذفه</p></div>';
+                        stopTrackingUpdates();
+                    }
+                    return;
+                }
+                const ticket = ticketData[0];
+                const existingIdx = tickets.findIndex(t => t.id === ticket.id);
+                if (existingIdx !== -1) {
+                    tickets[existingIdx] = ticket;
+                } else {
+                    tickets.push(ticket);
+                }
+
+                const previousData = lastTicketData ? JSON.stringify(lastTicketData) : null;
+                const currentData = JSON.stringify(ticket);
+                const hasChanged = (previousData !== null && previousData !== currentData);
+
+                renderTrackingContent(ticket, hasChanged);
+                lastTicketData = ticket;
+
+                if (ticket.status === 'done' || ticket.status === 'failed') {
+                    stopTrackingUpdates();
+                }
+            } catch (error) {
+                console.error('❌ خطأ في جلب التذكرة:', error);
+                if (document.getElementById('trackingBox').style.display !== 'none') {
+                    document.getElementById('trackingContent').innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>حدث خطأ في جلب بيانات الطلب</p></div>';
+                }
+            }
+        }
+
+        function renderTrackingContent(ticket, flash = false) {
+            let html = buildTrackingHTML(ticket);
+            const contentDiv = document.getElementById('trackingContent');
+            if (contentDiv) {
+                contentDiv.innerHTML = html;
+                if (flash) {
+                    contentDiv.classList.remove('tracking-flash');
+                    void contentDiv.offsetWidth;
+                    contentDiv.classList.add('tracking-flash');
+                }
+            }
+        }
+
+        function buildTrackingHTML(ticket) {
+            let statusClass = '',
+                statusText = '';
+            switch (ticket.status) {
+                case 'pending':
+                    statusClass = 'status-pending';
+                    statusText = '⏳ في انتظار موافقة المشرف';
+                    break;
+                case 'waiting':
+                    statusClass = 'status-waiting';
+                    statusText = '🔑 في انتظار إرسال رمز التحقق';
+                    break;
+                case 'verified':
+                    statusClass = 'status-verified';
+                    statusText = '✅ تم تأكيد الرمز';
+                    break;
+                case 'done':
+                    statusClass = 'status-done';
+                    statusText = '🎉 تم تغيير كود الدخول';
+                    break;
+                default:
+                    statusClass = 'status-failed';
+                    statusText = '❌ فشلت العملية';
+            }
+
+            let html = `
+                <div class="tracking-number">
+                    <div>رقم التتبع</div>
+                    <div class="number">${ticket.id}</div>
+                    <button class="btn btn-small btn-primary" onclick="copyTrackingNumber('${ticket.id}')" style="margin-top:10px; width:auto; display:inline-flex;">
+                        <i class="fas fa-copy"></i> نسخ رقم التتبع
+                    </button>
+                </div>
+                <div class="tracking-status ${statusClass}"><i class="fas fa-info-circle"></i><div>${statusText}</div></div>
+            `;
+
+            if (ticket.status === 'waiting' && ticket.verification_code) {
+                const handler = ticket.handler_id ? users.find(u => u.id === ticket.handler_id) : null;
+                const handlerPhone = handler ? handler.phone : '';
+                html += `<div class="verification-code">${ticket.verification_code}</div>`;
+                if (handlerPhone) {
+                    html += `<div style="background:rgba(0,212,255,0.1); padding:15px; border-radius:12px; margin:10px 0;">
+                                <i class="fas fa-phone" style="color:var(--supervisor);"></i>
+                                <span style="color:var(--supervisor);">أرسل هذا الرمز إلى المشرف على الرقم: </span>
+                                <strong style="direction:ltr; display:inline-block;">${handlerPhone}</strong>
+                             </div>`;
+                    html += `<button class="whatsapp-btn" onclick="sendCodeToHandler('${ticket.id}')"><i class="fab fa-whatsapp"></i> إرسال الرمز للمشرف</button>`;
+                } else {
+                    html += `<button class="whatsapp-btn" onclick="sendCodeToAdmin('${ticket.id}')"><i class="fab fa-whatsapp"></i> إرسال الرمز للمشرف</button>`;
+                }
+            }
+
+            // ===== استعادة زر تغيير الكود (كما كان سابقاً) =====
+            if (ticket.status === 'done' && ticket.new_login_code) {
+                html += `
+                    <div class="code-display-large">${ticket.new_login_code}</div>
+                    <div style="margin: 20px 0;">
+                        <label style="color:var(--accent);">تغيير كود الدخول (اختياري):</label>
+                        <div class="input-group">
+                            <i class="fas fa-lock input-icon"></i>
+                            <input type="password" id="userNewCodeInput" placeholder="كود جديد (6 أرقام)" maxlength="6" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                        </div>
+                        <button class="btn btn-success" onclick="userChangeCode('${ticket.id}')" style="margin-top:10px;">
+                            <i class="fas fa-save"></i> تحديث الكود
+                        </button>
+                    </div>
+                    <button class="btn btn-success" onclick="useNewCode('${ticket.new_login_code}')" style="margin-bottom:10px;"><i class="fas fa-sign-in-alt"></i> تسجيل الدخول الآن</button>
+                    <button class="btn btn-info" onclick="showTrackingRefreshModal()"><i class="fas fa-sync-alt"></i> تجديد كود الدخول</button>
+                `;
+            }
+            return html;
+        }
+
+        // ============================================================
+        //                      دالة تغيير الكود من قبل المستخدم
+        // ============================================================
+        async function userChangeCode(ticketId) {
+            const newCode = document.getElementById('userNewCodeInput')?.value.trim();
+            if (!newCode || newCode.length !== 6) {
+                showAlert('يرجى إدخال كود مكون من 6 أرقام', 'error');
+                return;
+            }
+            const ticket = tickets.find(t => t.id === ticketId);
+            if (!ticket) { showAlert('الطلب غير موجود', 'error'); return; }
+            const user = users.find(u => u.id === ticket.user_id);
+            if (!user) { showAlert('المستخدم غير موجود', 'error'); return; }
+
+            try {
+                await supabaseFetch(`users?id=eq.${user.id}`, 'PATCH', { login_code: newCode });
+                await supabaseFetch(`tickets?id=eq.${ticketId}`, 'PATCH', { new_login_code: newCode });
+                await loadAllData();
+                showAlert('✅ تم تحديث كود الدخول بنجاح', 'success');
+                showTracking(ticketId);
+            } catch (error) {
+                showAlert('حدث خطأ في التحديث', 'error');
+            }
+        }
+
+        // ============================================================
+        //                      باقي الدوال (نسخ، إرسال، إلخ)
+        // ============================================================
+        function copyTrackingNumber(trackingNumber) {
+            if (trackingNumber) {
+                navigator.clipboard.writeText(trackingNumber).then(() => {
+                    showAlert('تم نسخ رقم التتبع', 'success');
+                }).catch(() => {
+                    const textarea = document.createElement('textarea');
+                    textarea.value = trackingNumber;
+                    textarea.style.position = 'fixed';
+                    textarea.style.opacity = '0';
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textarea);
+                    showAlert('تم نسخ رقم التتبع', 'success');
+                });
+            }
+        }
+
+        function stopTrackingUpdates() {
+            if (trackingInterval) {
+                clearInterval(trackingInterval);
+                trackingInterval = null;
+            }
+            lastTicketData = null;
+        }
+
+        function sendCodeToHandler(ticketId) {
+            const ticket = tickets.find(t => t.id === ticketId);
+            if (!ticket || !ticket.verification_code) return;
+            const handler = users.find(u => u.id === ticket.handler_id);
+            if (!handler || !handler.phone) {
+                showAlert('لم يتم تعيين مشرف لهذا الطلب بعد', 'error');
+                return;
+            }
+            const message = `🔐 رمز التحقق للطلب #${ticket.id}\nالمستخدم: ${ticket.user_name}\nالرمز: ${ticket.verification_code}`;
+            window.open(`https://wa.me/${handler.phone.replace('+', '')}?text=${encodeURIComponent(message)}`, '_blank');
+        }
+
+        function sendCodeToAdmin(ticketId) {
+            const ticket = tickets.find(t => t.id === ticketId);
+            if (!ticket || !ticket.verification_code) return;
+            const message = `🔐 رمز التحقق للطلب #${ticket.id}\nالمستخدم: ${ticket.user_name}\nالرمز: ${ticket.verification_code}`;
+            window.open(`https://wa.me/${ADMIN_PHONE.replace('+', '')}?text=${encodeURIComponent(message)}`, '_blank');
+        }
+
+        function useNewCode(code) {
+            navigator.clipboard.writeText(code).then(() => { showAlert('تم نسخ الكود', 'success');
+                showLogin(); });
+        }
+
+        function showTrackingRefreshModal() { document.getElementById('trackingRefreshModal').style.display = 'flex'; }
+
+        function closeTrackingRefreshModal() { document.getElementById('trackingRefreshModal').style.display = 'none'; }
+
+        async function refreshCodeFromTracking() {
+            if (!currentTrackingId) { showAlert('حدث خطأ', 'error');
+                closeTrackingRefreshModal(); return; }
+            const ticket = tickets.find(t => t.id === currentTrackingId);
+            if (!ticket) { showAlert('الطلب غير موجود', 'error');
+                closeTrackingRefreshModal(); return; }
+            const oldCode = document.getElementById('trackingOldCode').value.trim();
+            const newCode = document.getElementById('trackingNewCode').value.trim();
+            if (!oldCode || !newCode || newCode.length !== 6) { showAlert('يرجى إدخال الكود القديم والجديد بشكل صحيح', 'error'); return; }
+            const user = users.find(u => u.id === ticket.user_id);
+            if (!user) { showAlert('المستخدم غير موجود', 'error');
+                closeTrackingRefreshModal(); return; }
+            if (oldCode !== user.login_code) { showAlert('الكود القديم غير صحيح', 'error'); return; }
+            try {
+                await supabaseFetch(`users?id=eq.${user.id}`, 'PATCH', { login_code: newCode });
+                await supabaseFetch(`tickets?id=eq.${ticket.id}`, 'PATCH', { new_login_code: newCode });
+                await loadAllData();
+                closeTrackingRefreshModal();
+                showAlert('✅ تم تجديد كود الدخول بنجاح', 'success');
+                showTracking(currentTrackingId);
+            } catch (error) {
+                showAlert('حدث خطأ في التحديث', 'error');
+            }
+        }
+
+        // ============================================================
+        //                      دوال إدارة الطلبات (مختصرة)
+        // ============================================================
+        function showAdminTickets() { /* ... */ }
+        function closeAdminTicketsModal() { /* ... */ }
+        function processTicket(ticketId) { /* ... */ }
+        function closeProcessTicketModal() { /* ... */ }
+        function approveTicket(ticketId) {
+            const ticket = tickets.find(t => t.id === ticketId);
+            if (!ticket) return;
+            const handlerId = currentUser.id;
+            let code = generateSixDigitNumber();
+            try {
+                supabaseFetch(`tickets?id=eq.${ticketId}`, 'PATCH', {
+                    status: 'waiting',
+                    verification_code: code,
+                    handler_id: handlerId
+                }).then(() => {
+                    loadAllData();
+                    showAlert('تمت الموافقة على الطلب', 'success');
+                    closeProcessTicketModal();
+                });
+            } catch (error) {
+                showAlert('حدث خطأ', 'error');
+            }
+        }
+        function rejectTicket(ticketId) { /* ... */ }
+        function verifyUserCode(ticketId) { /* ... */ }
+        function supervisorSendNewCode(ticketId) {
+            const newCode = document.getElementById('newCodeBySupervisor')?.value.trim();
+            if (!newCode || newCode.length !== 6) {
+                showAlert('يرجى إدخال كود مكون من 6 أرقام', 'error');
+                return;
+            }
+            const ticket = tickets.find(t => t.id === ticketId);
+            if (!ticket) return;
+            const user = users.find(u => u.id === ticket.user_id);
+            if (!user || !user.phone) {
+                showAlert('رقم هاتف المستخدم غير مسجل', 'error');
+                return;
+            }
+            supabaseFetch(`users?id=eq.${user.id}`, 'PATCH', { login_code: newCode }).then(() => {
+                supabaseFetch(`tickets?id=eq.${ticketId}`, 'PATCH', {
+                    new_login_code: newCode,
+                    status: 'done'
+                }).then(() => {
+                    loadAllData();
+                    const message = `📋 رقم الطلب: ${ticket.id}\n🔑 كود الدخول الجديد: ${newCode}`;
+                    window.open(`https://wa.me/${user.phone.replace('+', '')}?text=${encodeURIComponent(message)}`, '_blank');
+                    showAlert('✅ تم إرسال الكود الجديد للمستخدم عبر واتساب', 'success');
+                    closeProcessTicketModal();
+                });
+            });
+        }
+        function showDeleteTicketModal(ticketId) { /* ... */ }
+        function closeDeleteTicketModal() { /* ... */ }
+        function confirmDeleteTicket() { /* ... */ }
+
+        // ============================================================
+        //                      دوال عرض الأرقام والترويج والمستفيدين
+        // ============================================================
+        function renderMyNumbers() { /* ... */ }
+        function renderPromoTab() { /* ... */ }
+        function renderBeneficiariesTab() { /* ... */ }
+        function renderAdminPanel() { /* ... */ }
+        function renderSupervisorPanel() { /* ... */ }
+        function searchUsers() { /* ... */ }
+        function searchSupervisorUsers() { /* ... */ }
+        function togglePermission(id) { /* ... */ }
+        function toggleEditPermission(id) { /* ... */ }
+        function closePermissionsModal() { /* ... */ }
+        function closeEditPermissionsModal() { /* ... */ }
+        function confirmPromoteWithPermissions() { /* ... */ }
+        function confirmEditPermissions() { /* ... */ }
+        function showEditPermissionsModal(userId) { /* ... */ }
+        function showPermissionsModal(userId) { /* ... */ }
+        function showDemoteModal(userId) { /* ... */ }
+        function hideDemoteModal() { /* ... */ }
+        function confirmDemote() { /* ... */ }
+        function editUser(userId) { /* ... */ }
+        function closeEditUserModal() { /* ... */ }
+        function saveUserEdits() { /* ... */ }
+        function showDeleteUserModal(userId) { /* ... */ }
+        function hideDeleteUserModal() { /* ... */ }
+        function confirmDeleteUser() { /* ... */ }
+        function showCancelBeneficiaryModal() { /* ... */ }
+        function hideCancelBeneficiaryModal() { /* ... */ }
+        function confirmCancelBeneficiary() { /* ... */ }
+        function showSuspendBeneficiaryModal(id) { /* ... */ }
+        function hideSuspendBeneficiaryModal() { /* ... */ }
+        function confirmSuspendBeneficiary() { /* ... */ }
+        function showActivateBeneficiaryModal(id) { /* ... */ }
+        function hideActivateBeneficiaryModal() { /* ... */ }
+        function confirmActivateBeneficiary() { /* ... */ }
+        function deleteBeneficiary(id) { /* ... */ }
+        function showUsePromoModal() { /* ... */ }
+        function closeUsePromoModal() { /* ... */ }
+        function usePromoCode() { /* ... */ }
+        function copyPromoCode() { /* ... */ }
+        function sharePromoViaWhatsApp() { /* ... */ }
+        function showChangePromoCodeModal() { /* ... */ }
+        function closeChangePromoCodeModal() { /* ... */ }
+        function confirmChangePromoCode() { /* ... */ }
+        function updateStats() { /* ... */ }
+        function formatDate(dateString) { /* ... */ }
+        function showAlert(message, type) { /* ... */ }
+        function showDeleteNumberModal(id) { /* ... */ }
+        function hideConfirmDeleteNumberModal() { /* ... */ }
+        function confirmDeleteNumber() { /* ... */ }
+        function showAddNumberModal() { /* ... */ }
+        function closeAddNumberModal() { /* ... */ }
+        function saveNumber() { /* ... */ }
+        function showMultipleNumbersModal() { /* ... */ }
+        function closeMultipleNumbersModal() { /* ... */ }
+        function addMultipleNumbers() { /* ... */ }
+        function copyNumber(value, numberId, button) { /* ... */ }
+        function markNumberAsTaken(numberId) { /* ... */ }
+        function reloadCurrentTab() { /* ... */ }
+        function showAppContent() { /* ... */ }
+        function updateUserInfo() { /* ... */ }
+        function renderContent() { /* ... */ }
+        function setUserMode(mode) { /* ... */ }
+        function getCurrentUserRole() { /* ... */ }
+        function showUserNormalContent() { /* ... */ }
+        function switchTab(tab) { /* ... */ }
+        function showConfirmLogoutModal() { /* ... */ }
+        function hideConfirmLogoutModal() { /* ... */ }
+        function logoutConfirmed() { /* ... */ }
+
+        // ============================================================
+        //                      تهيئة التطبيق
+        // ============================================================
+        document.addEventListener('DOMContentLoaded', async function() {
+            document.getElementById('offlinePage').style.display = 'none';
+            initConnectionMonitoring();
+            await loadAllData();
+            await initializeAdmin();
+
+            const savedUser = localStorage.getItem('numbers_currentUser');
+            if (savedUser) {
+                try {
+                    const parsedUser = JSON.parse(savedUser);
+                    const userData = await supabaseFetch(`users?id=eq.${parsedUser.id}&select=*`);
+                    if (userData && userData.length > 0) {
+                        currentUser = userData[0];
+                        userMode = currentUser.role === 'supervisor' ? 'supervisor' : 'user';
+                        showAppContent();
+                    } else {
+                        localStorage.removeItem('numbers_currentUser');
+                    }
+                } catch (e) {
+                    localStorage.removeItem('numbers_currentUser');
+                }
+            }
+
+            document.getElementById('loginForm').addEventListener('submit', e => { e.preventDefault();
+                login(); });
+            document.getElementById('registerForm').addEventListener('submit', e => { e.preventDefault();
+                register(); });
+            document.getElementById('forgotPasswordForm').addEventListener('submit', e => { e.preventDefault();
+                createForgotTicket(); });
+            document.getElementById('confirmDeleteNumberBtn').addEventListener('click', () => { if (numberToDelete) confirmDeleteNumber(); });
+        });
+
+        // تصدير الدوال العامة
+        window.showLogin = showLogin;
+        window.showRegister = showRegister;
+        window.showForgotPassword = showForgotPassword;
+        window.showTrackingInput = showTrackingInput;
+        window.trackTicket = trackTicket;
+        window.sendCodeToAdmin = sendCodeToAdmin;
+        window.sendCodeToHandler = sendCodeToHandler;
+        window.useNewCode = useNewCode;
+        window.showTrackingRefreshModal = showTrackingRefreshModal;
+        window.closeTrackingRefreshModal = closeTrackingRefreshModal;
+        window.refreshCodeFromTracking = refreshCodeFromTracking;
+        window.showAdminTickets = showAdminTickets;
+        window.closeAdminTicketsModal = closeAdminTicketsModal;
+        window.processTicket = processTicket;
+        window.closeProcessTicketModal = closeProcessTicketModal;
+        window.approveTicket = approveTicket;
+        window.rejectTicket = rejectTicket;
+        window.verifyUserCode = verifyUserCode;
+        window.supervisorSendNewCode = supervisorSendNewCode;
+        window.showDeleteTicketModal = showDeleteTicketModal;
+        window.closeDeleteTicketModal = closeDeleteTicketModal;
+        window.confirmDeleteTicket = confirmDeleteTicket;
+        window.showConfirmLogoutModal = showConfirmLogoutModal;
+        window.hideConfirmLogoutModal = hideConfirmLogoutModal;
+        window.logoutConfirmed = logoutConfirmed;
+        window.switchTab = switchTab;
+        window.copyNumber = copyNumber;
+        window.copyTrackingNumber = copyTrackingNumber;
+        window.showDeleteNumberModal = showDeleteNumberModal;
+        window.hideConfirmDeleteNumberModal = hideConfirmDeleteNumberModal;
+        window.confirmDeleteNumber = confirmDeleteNumber;
+        window.showAddNumberModal = showAddNumberModal;
+        window.closeAddNumberModal = closeAddNumberModal;
+        window.saveNumber = saveNumber;
+        window.showMultipleNumbersModal = showMultipleNumbersModal;
+        window.closeMultipleNumbersModal = closeMultipleNumbersModal;
+        window.addMultipleNumbers = addMultipleNumbers;
+        window.showCancelBeneficiaryModal = showCancelBeneficiaryModal;
+        window.hideCancelBeneficiaryModal = hideCancelBeneficiaryModal;
+        window.confirmCancelBeneficiary = confirmCancelBeneficiary;
+        window.showSuspendBeneficiaryModal = showSuspendBeneficiaryModal;
+        window.hideSuspendBeneficiaryModal = hideSuspendBeneficiaryModal;
+        window.confirmSuspendBeneficiary = confirmSuspendBeneficiary;
+        window.showActivateBeneficiaryModal = showActivateBeneficiaryModal;
+        window.hideActivateBeneficiaryModal = hideActivateBeneficiaryModal;
+        window.confirmActivateBeneficiary = confirmActivateBeneficiary;
+        window.deleteBeneficiary = deleteBeneficiary;
+        window.showUsePromoModal = showUsePromoModal;
+        window.closeUsePromoModal = closeUsePromoModal;
+        window.usePromoCode = usePromoCode;
+        window.copyPromoCode = copyPromoCode;
+        window.sharePromoViaWhatsApp = sharePromoViaWhatsApp;
+        window.showChangePromoCodeModal = showChangePromoCodeModal;
+        window.closeChangePromoCodeModal = closeChangePromoCodeModal;
+        window.confirmChangePromoCode = confirmChangePromoCode;
+        window.searchUsers = searchUsers;
+        window.searchSupervisorUsers = searchSupervisorUsers;
+        window.closePermissionsModal = closePermissionsModal;
+        window.confirmPromoteWithPermissions = confirmPromoteWithPermissions;
+        window.closeEditPermissionsModal = closeEditPermissionsModal;
+        window.confirmEditPermissions = confirmEditPermissions;
+        window.showDemoteModal = showDemoteModal;
+        window.hideDemoteModal = hideDemoteModal;
+        window.confirmDemote = confirmDemote;
+        window.editUser = editUser;
+        window.closeEditUserModal = closeEditUserModal;
+        window.saveUserEdits = saveUserEdits;
+        window.showDeleteUserModal = showDeleteUserModal;
+        window.hideDeleteUserModal = hideDeleteUserModal;
+        window.confirmDeleteUser = confirmDeleteUser;
+        window.setUserMode = setUserMode;
+        window.togglePermission = togglePermission;
+        window.toggleEditPermission = toggleEditPermission;
+        window.showPermissionsModal = showPermissionsModal;
+        window.showEditPermissionsModal = showEditPermissionsModal;
+        window.stopTrackingUpdates = stopTrackingUpdates;
+        window.userChangeCode = userChangeCode;
+    </script>
+</body>
+</html>
