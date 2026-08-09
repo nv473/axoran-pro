@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة تحكم عمليات التحقق</title>
+    <style>
+        /* تنسيق الصفحة الرئيسية */
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 1400px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        h1, h2 { margin: 0 0 20px 0; color: #2c3e50; text-align: right; }
+        
+        /* تنسيق النموذج */
+        .form-container { background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 30px; border: 1px solid #e9ecef; }
+        .grid-form { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px; }
+        .form-group { display: flex; flex-direction: column; }
+        .form-group label { font-weight: 600; margin-bottom: 5px; font-size: 14px; color: #495057; }
+        .form-group input, .form-group select { padding: 8px 12px; border: 1px solid #ced4da; border-radius: 4px; font-size: 14px; transition: 0.2s; }
+        .form-group input:focus, .form-group select:focus { border-color: #80bdff; outline: 0; box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25); }
+        
+        /* أزرار التحكم */
+        .btn-container { margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px; }
+        .btn { padding: 10px 25px; border: none; border-radius: 5px; cursor: pointer; font-weight: 600; }
+        .btn-primary { background: #007bff; color: #fff; }
+        .btn-primary:hover { background: #0056b3; }
+        .btn-danger { background: #dc3545; color: #fff; }
+        .btn-success { background: #28a745; color: #fff; }
+
+        /* تنسيق الجدول */
+        .table-responsive { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
+        thead { background: #2c3e50; color: #fff; }
+        th, td { padding: 12px 10px; text-align: right; border-bottom: 1px solid #dee2e6; }
+        tr:hover { background-color: #f1f3f5; }
+        .status-badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+        .status-pending { background: #ffc107; color: #856404; }
+        .status-verified { background: #d4edda; color: #155724; }
+        .status-failed { background: #f8d7da; color: #721c24; }
+
+        /* التجاوب مع الشاشات الصغيرة */
+        @media (max-width: 600px) { .grid-form { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📋 سجل عمليات التحقق (User Verification Records)</h1>
+
+        <!-- قسم إضافة سجل جديد -->
+        <div class="form-container">
+            <h2 style="font-size: 18px; margin-bottom: 15px;">➕ إضافة سجل جديد</h2>
+            <form id="verificationForm" class="grid-form">
+                <div class="form-group">
+                    <label for="id">المعرف (ID):</label>
+                    <input type="text" id="id" placeholder="مثال: rec_123" required>
+                </div>
+                <div class="form-group">
+                    <label for="user_id">معرف المستخدم (User ID):</label>
+                    <input type="text" id="user_id" placeholder="مثال: 550e8400..." required>
+                </div>
+                <div class="form-group">
+                    <label for="user_name">اسم المستخدم:</label>
+                    <input type="text" id="user_name" placeholder="أحمد" required>
+                </div>
+                <div class="form-group">
+                    <label for="user_phone">رقم الهاتف:</label>
+                    <input type="text" id="user_phone" placeholder="+9665xxxxxxxx" required>
+                </div>
+                <div class="form-group">
+                    <label for="status">الحالة:</label>
+                    <select id="status">
+                        <option value="pending">قيد الانتظار (Pending)</option>
+                        <option value="verified">تم التحقق (Verified)</option>
+                        <option value="failed">فشل (Failed)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="old_login_code">كود الدخول القديم:</label>
+                    <input type="text" id="old_login_code" placeholder="كود سابق">
+                </div>
+                <div class="form-group">
+                    <label for="new_login_code">كود الدخول الجديد:</label>
+                    <input type="text" id="new_login_code" placeholder="كود جديد">
+                </div>
+                <div class="form-group">
+                    <label for="verification_code">رمز التحقق المرسل:</label>
+                    <input type="text" id="verification_code" placeholder="8841">
+                </div>
+                <div class="form-group">
+                    <label for="approved_by">معرف الموافق (UUID):</label>
+                    <input type="text" id="approved_by" placeholder="معرف المسؤول">
+                </div>
+                <div class="form-group">
+                    <label for="approved_by_phone">رقم الموافق:</label>
+                    <input type="text" id="approved_by_phone" placeholder="رقم هاتف المسؤول">
+                </div>
+                <div class="form-group">
+                    <label for="failed_reason">سبب الفشل:</label>
+                    <input type="text" id="failed_reason" placeholder="انتهت صلاحية الكود">
+                </div>
+                <div class="form-group">
+                    <label for="created_at">تاريخ الإنشاء:</label>
+                    <input type="datetime-local" id="created_at">
+                </div>
+                <div class="form-group">
+                    <label for="handler_id">معرف المعالج (UUID):</label>
+                    <input type="text" id="handler_id" placeholder="معرف النظام المسؤول">
+                </div>
+                <div class="form-group">
+                    <label for="expires_at">تاريخ انتهاء الصلاحية:</label>
+                    <input type="datetime-local" id="expires_at">
+                </div>
+            </form>
+            <div class="btn-container">
+                <button type="button" class="btn btn-success" onclick="addNewRecord()">حفظ السجل</button>
+                <button type="reset" class="btn btn-danger" onclick="document.getElementById('verificationForm').reset()">إفراغ الحقول</button>
+            </div>
+        </div>
+
+        <!-- جدول عرض البيانات -->
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>User ID</th>
+                        <th>User Name</th>
+                        <th>User Phone</th>
+                        <th>Status</th>
+                        <th>Old Code</th>
+                        <th>New Code</th>
+                        <th>Verification Code</th>
+                        <th>Approved By</th>
+                        <th>Approved Phone</th>
+                        <th>Failed Reason</th>
+                        <th>Created At</th>
+                        <th>Handler ID</th>
+                        <th>Expires At</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <!-- البيانات ستمتلأ هنا بواسطة JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // مصفوفة وهمية للبدء لملء الجدول بشكل تجريبي
+        let records = [
+            { id: 'rec_001', user_id: 'c56a4180-65aa-42ec-a945-5fd21dec0538', user_name: 'أحمد', user_phone: '+966501234567', status: 'pending', old_login_code: '', new_login_code: '1234', verification_code: '9988', approved_by: '', approved_by_phone: '', failed_reason: '', created_at: '2026-08-09T10:00', handler_id: '', expires_at: '2026-08-09T10:05' },
+            { id: 'rec_002', user_id: 'f47ac10b-58cc-4372-a567-0e02b2c3d479', user_name: 'سارة', user_phone: '+966551234567', status: 'verified', old_login_code: '1122', new_login_code: '3344', verification_code: '5544', approved_by: 'admin_001', approved_by_phone: '+966555555555', failed_reason: '', created_at: '2026-08-09T09:30', handler_id: 'sys_001', expires_at: '2026-08-09T09:35' }
+        ];
+
+        // وظيفة لعرض البيانات داخل الجدول
+        function renderTable() {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+            
+            records.forEach(record => {
+                const tr = document.createElement('tr');
+                
+                // تحديد لون الحالة
+                let statusClass = 'status-pending';
+                if(record.status === 'verified') statusClass = 'status-verified';
+                if(record.status === 'failed') statusClass = 'status-failed';
+
+                tr.innerHTML = `
+                    <td>${record.id}</td>
+                    <td style="font-family: monospace; font-size: 12px;">${record.user_id}</td>
+                    <td>${record.user_name}</td>
+                    <td>${record.user_phone}</td>
+                    <td><span class="status-badge ${statusClass}">${record.status}</span></td>
+                    <td>${record.old_login_code || '-'}</td>
+                    <td>${record.new_login_code || '-'}</td>
+                    <td><strong>${record
